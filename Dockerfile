@@ -1,13 +1,11 @@
-FROM alpine:latest
+# Use the official FlareSolverr image
+FROM flaresolverr/flaresolverr:latest
 
-# 1. Install Tinyproxy
-RUN apk add --no-cache tinyproxy
+# Set the port to match Render's requirement
+ENV PORT=8191
+ENV LOG_LEVEL=info
+ENV LOG_HTML=false
+ENV CAPTCHA_SOLVER=none
 
-# 2. Configure it (Allow everyone, enable Auth)
-RUN sed -i 's/^Allow /#Allow /' /etc/tinyproxy/tinyproxy.conf && \
-    sed -i 's/^#BasicAuth/BasicAuth/' /etc/tinyproxy/tinyproxy.conf && \
-    echo "BasicAuth jaredlkx 12345678" >> /etc/tinyproxy/tinyproxy.conf && \
-    sed -i 's/^#DisableViaHeader/DisableViaHeader/' /etc/tinyproxy/tinyproxy.conf
-
-# 3. MAGIC COMMAND: Replace the default port 8888 with Render's $PORT at startup
-CMD sh -c "sed -i 's/^Port 8888/Port $PORT/' /etc/tinyproxy/tinyproxy.conf && tinyproxy -d"
+# Expose the port
+EXPOSE 8191
