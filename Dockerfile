@@ -1,8 +1,13 @@
-FROM mhdzumair/mediaflow-proxy:latest
+FROM alpine:latest
 
-# Set your password
-ENV API_PASSWORD=12345678
+# 1. Install Tinyproxy
+RUN apk add --no-cache tinyproxy
 
-# MAGIC FIX: We use 'python -m uvicorn' instead of just 'uvicorn'.
-# This tells Python to find the tool itself, so we don't get "Command not found".
-CMD ["sh", "-c", "python -m uvicorn mediaflow_proxy.main:app --host 0.0.0.0 --port $PORT"]
+# 2. Configure it (Allow everyone, enable Auth)
+RUN sed -i 's/^Allow /#Allow /' /etc/tinyproxy/tinyproxy.conf && \
+    sed -i 's/^#BasicAuth/BasicAuth/' /etc/tinyproxy/tinyproxy.conf && \
+    echo "BasicAuth jaredlkx 12345678" >> /etc/tinyproxy/tinyproxy.conf && \
+    sed -i 's/^#DisableViaHeader/DisableViaHeader/' /etc/tinyproxy/tinyproxy.conf
+
+# 3. MAGIC COMMAND: Replace the default port 8888 with Render's $PORT at startup
+CMD sh -c "sed -i 's/^Port 8888/Port $PORT/' /etc/tinyproxy/tinyproxy.conf && tinyproxy -d"
